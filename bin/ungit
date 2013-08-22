@@ -3,6 +3,12 @@ var forever = require('forever-monitor');
 var config = require('../source/config')();
 var child_process = require('child_process');
 var path = require('path');
+var fs = require('fs');
+
+if (!checkForGitInstallation()) {
+	console.log('No git installation found. Make sure that git is installed and is included in your path');
+	process.exit();
+}
 
 var child = new (forever.Monitor)(path.join(__dirname, '..', 'source', 'server.js'), {
 	silent: false,
@@ -24,6 +30,26 @@ function startupListener(data) {
 	}
 }
 
-child.on('stdout', startupListener);
+function checkForGitInstallation() {
 
+	console.log('## searching for git install ##');
+	var paths = process.env.PATH.split(':');
+
+	for(var i = 0; i < paths.length; i++) {
+		var path = paths[i];
+		var files = fs.readdirSync(path);
+
+		for (var j = 0; j < files.length; j++) {
+			var file = files[j];
+
+			if (file === 'git') {
+				return true;
+			}
+		}
+	};
+
+	return false;
+};
+
+child.on('stdout', startupListener);
 child.start();
